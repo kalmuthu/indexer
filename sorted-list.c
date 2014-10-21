@@ -79,7 +79,7 @@ int SLInsert(SortedListPtr list, void *newObj)
       return 0;              
     }
 
-  struct Node * duptr = list->head;
+ /* struct Node * duptr = list->head;
 
   while (duptr)              // checks if data already exists in list
   {
@@ -89,7 +89,7 @@ int SLInsert(SortedListPtr list, void *newObj)
     return 0;
    }
    duptr = duptr->next;
-  }
+  } */
     
   struct Node * newNode = malloc(sizeof(struct Node));
   newNode->data = newObj;
@@ -200,7 +200,7 @@ void * SLNextItem(SortedListIteratorPtr iter)
 
   else 
   {
-    printf("iteration error, could not find next Node \n");
+   // printf("iteration error, could not find next Node \n");
     return NULL;
   }
 }

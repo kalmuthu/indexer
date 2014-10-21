@@ -12,7 +12,7 @@
 
 HashNodePtr hashtable;
 SortedListPtr tokens;
-
+char s[500];
 
 void basicDestructor(void* v){
 	return;
@@ -32,7 +32,7 @@ int compareStrings(void *p1, void *p2)
 	char *s1 = p1;
 	char *s2 = p2;
 
-	return strcmp(s1, s2);
+	return strcmp(s2, s1);
 }
 
 
@@ -42,7 +42,7 @@ int recordCompare( void* a, void* b )
 	int aa = ((RecordPtr)a)->occurences;
 	int bb = ((RecordPtr)b)->occurences;
 
-	return aa - bb;
+	return aa-bb;
 }
 
 
@@ -88,11 +88,11 @@ int insertNewRecord(HashNodePtr hashptr, char* file_path)
 	if(response)
 	{
 		return 1;
-
 	}
 
 	else
 	{
+		printf("error: %s \n", newRecord->file_path);
 		free(newRecord);
 		return 0;
 	}
@@ -109,6 +109,7 @@ int addRecord(char* file_path, HashNodePtr hash )
 	for(target = hash->records->head; target!=NULL; target = target->next )
 	{
 		curr = (RecordPtr)(target->data);
+
 		cmp = strcmp( file_path, curr->file_path );
 
 		if( cmp == 0 )
@@ -145,7 +146,9 @@ int addHashNode(char* token, char* file_path)
 	hash->num_records = 0;
 
 
+
 	int response = insertNewRecord(hash, file_path); //insert head record to list since it's a new Node
+
 
 //	printf("%p \n", hash->records->head);
 
@@ -158,8 +161,9 @@ int addHashNode(char* token, char* file_path)
 		hash->num_records++;
 		SLInsert(tokens, token);       //insert token into master sorted LL of all gathered tokens
 
-		RecordPtr r = hash->records->head->data;
-		printf("%s \n", r->file_path);
+
+	//	RecordPtr r = hash->records->head->data;
+	//	printf("%s \n", r->file_path);
 
 	//printf("word before: %s \n", hash->word);
 	//printf("head before: %s \n", hash->records->head);
@@ -170,8 +174,8 @@ int addHashNode(char* token, char* file_path)
 	//	printf("word after: %s \n", hash->word);
 	//	printf("head after: %s \n", hash->records->head);
 
-		HashNodePtr h = NULL;
-		h = Hasher(token);
+	//	HashNodePtr h = NULL;
+	//	h = Hasher(token);
 		//printf("%s \n", h->word);
 		//printf("%p \n", h->records->head);
 		//printf("%d \n", h->num_records);
@@ -185,7 +189,8 @@ int addHashNode(char* token, char* file_path)
 
 	else
 	{
-		HashDestroyer(hash);      //may be wonky :0
+
+		//HashDestroyer(hash);      //may be wonky :0
 		return 0;
 	}
 }
@@ -193,23 +198,26 @@ int addHashNode(char* token, char* file_path)
 char* FiletoString(char* file_path)
 {
 
-	FILE *file = fopen(file_path, "r");
 
+	memset(&s[0], 0, sizeof(s));
+
+	FILE *file = fopen(file_path, "r");
 
 	if (file == NULL)
 	{
-		printf("Error opening file, %s \n", file_path);
+		printf("Error opening file/dir: %s \n", file_path);
+		printf("Indexer will now exit \n");
+		exit(EXIT_FAILURE);
 		return NULL;
 	}
 
-
-
 	fseek(file, 0, SEEK_END);
-	size_t fileSize = ftell(file); 
+	size_t fileSize = ftell(file);
 	rewind(file);
-
-	char *s = (char *) malloc(sizeof(fileSize));
+	//char *s = (char *) malloc(fileSize);
 	int result = fread(s, 1, fileSize, file);
+	//bzero(s,500);
+
 	fclose(file);
 
 	if (result == 0) {
@@ -219,70 +227,41 @@ char* FiletoString(char* file_path)
 	return s;
 }
 
-
-void walkDir(char *basedir)
+void indexify(char* entpath)
 {
-
-	DIR *dir;
-	char b[512];
-	struct dirent *ent;
-	
-	dir = opendir(basedir);
-	
-	if(dir != NULL)
-	{
-		printf("\n\tWalking \"%s\"\n", basedir);
-		//ent = readdir(dir);
-
-		
-		while((ent = readdir(dir)) != NULL)
-		{
-
-			printf("%s \n", ent->d_name);
-			if(strcmp(ent->d_name, ".") == 0 || strcmp(ent->d_name, "..") == 0)
-			{
-				continue;
-			} 
-
-			DIR* dirtest = opendir(ent->d_name);
-			
-			char entpath[] = "";
-			strcat(entpath, basedir);
-			strcat(entpath, "/");
-			strcat(entpath, ent->d_name);  
-			
-			if(dirtest) // directory
-			{
-				printf("\n\tDIR: %s\n", ent->d_name);
-				walkDir(ent->d_name);
-				closedir(dirtest);
-			}
-			else // file
-			{
 				char* s = FiletoString(entpath);
 				TokenizerT* tokenizer = TKCreate(s);
-				char* token = TKGetNextToken( tokenizer );
-				
+				char * token;
+				token = TKGetNextToken(tokenizer);
 
+
+				
 				while (token)  // loop through all tokens, inserting new Records into hashnodes / creating new Hashnodes / updating existing records
 				{
+
 					HashNodePtr h = NULL;
 					h = Hasher(token);
 
+
 					if (!h)
 					{
-						int Nodegen = addHashNode(token, entpath);
 
+
+						int Nodegen = addHashNode(token, entpath);
+						
 						if (!Nodegen)
 						{
 							printf("Error creating new hash node \n");
 							return;
 						}
 
+
 					}
 
-					if (h)
+					else
 					{
+
+						
 						int Fileinsert = addRecord(entpath, h);
 
 						if (!Fileinsert)
@@ -293,6 +272,62 @@ void walkDir(char *basedir)
 					}
 					token = TKGetNextToken(tokenizer);
 				}
+
+}
+
+
+void walkDir(char *basedir)
+{
+
+
+	DIR *dir;
+	//char b[512];
+	struct dirent *ent;
+	char filenames[250][100];
+	int fileindex = 0;
+	int fileflag = 0;
+	char* entpath;
+	
+	dir = opendir(basedir);
+
+
+
+	if (!dir)
+	{
+		indexify(basedir);
+	}
+
+	
+	if(dir != NULL)
+	{	
+		while((ent = readdir(dir)) != NULL)
+		{
+
+			if(strcmp(ent->d_name, ".") == 0 || strcmp(ent->d_name, "..") == 0)
+			{
+				continue;
+			} 
+			entpath = filenames[fileindex];
+			strcat(entpath, basedir);
+			strcat(entpath, "/");
+			strcat(entpath, ent->d_name); 
+
+			fileindex++; 
+
+
+
+			DIR* dirtest = opendir(entpath);
+
+
+			
+			if(dirtest) // directory
+			{
+				walkDir(entpath);
+				closedir(dirtest);
+			}
+			else // file
+			{
+				indexify(entpath);
 			}
 		
 		}
@@ -300,35 +335,90 @@ void walkDir(char *basedir)
 	}
 }
 
+int checkOverWrite (char* filename)
+{
+  DIR *d;
+  struct dirent *dir;
+  d = opendir(".");
+  if (d)
+  {
+    while ((dir = readdir(d)) != NULL)
+    {
+      if (strcmp(dir->d_name, filename) == 0)
+      {
+      	printf("Safety trigger: Attempting to overwrite existing file in this directory. \n");
+      	printf("Indexer will now exit \n");
+      	exit(EXIT_FAILURE);
+      	return 0;
+      }
+    }
+    closedir(d);
+  }
+
+  return 1;
+}
+
+
+
+void writeFile( char* file_path )
+{
+	SortedListIteratorPtr iter = SLCreateIterator(tokens);;
+	FILE* new_file = fopen( file_path, "w" );
+	char* token = (char*) SLGetItem(iter);
+	HashNodePtr hashy = Hasher(token);
+	int i = 0;
+	printf("\n");
+		
+		while (token)
+		{
+
+		hashy = Hasher(token);
+		fputs("<list> ", new_file);
+		fputs(token, new_file);
+		fputs("\n", new_file);
+		SortedListIteratorPtr recorditer = SLCreateIterator(hashy->records);
+		RecordPtr record = SLGetItem(recorditer);
+
+
+			while (record)
+			{
+				if (i == 5)
+				{
+					fputs("\n", new_file);	
+					i = 0;
+				}
+				fputs( record->file_path, new_file );
+				fputs( " ", new_file );
+				char occ[15];
+				snprintf(occ, 20, "%zd", record->occurences );
+				fputs( occ, new_file );
+				fputs( " ", new_file );
+				record = SLNextItem(recorditer);
+				i++;
+			}
+		fputs("\n", new_file);
+		fputs("</list>", new_file);
+		fputs("\n", new_file);
+		i = 0;	
+
+		token = (char*) SLNextItem(iter); 
+		}
+
+		fclose(new_file);
+}
 
 
 int main (int argc, char** argv)
 {
-
+	
 	tokens = SLCreate(compareStrings, basicDestructor);
 	hashtable = NULL;
-
-	walkDir(argv[1]);
-
-	SortedListIteratorPtr iter = SLCreateIterator(tokens);
-
 	
-
-	char* token = (char*) SLGetItem(iter);
-	HashNodePtr hashy = Hasher(token);
-	
-	SortedListIteratorPtr recorditer = SLCreateIterator(hashy->records);
-	RecordPtr record = SLGetItem(recorditer);
-
-
-
-	while (token != NULL)
-	{
-		hashy = Hasher(token);
-		RecordPtr record = (RecordPtr) hashy->records->head->data;
-		printf("word: %s, file: %s, occ: %d \n", hashy->word, record->file_path, record->occurences);
-		token = (char*) SLNextItem(iter);
-	} 
+	checkOverWrite(argv[1]);
+	walkDir(argv[2]);
+	writeFile(argv[1]);
+	printf("\n");
+	printf("File generated successfully \n");
 
 
 }	
