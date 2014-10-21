@@ -12,7 +12,7 @@
 
 HashNodePtr hashtable;
 SortedListPtr tokens;
-char s[500];
+char s[5000];
 
 void basicDestructor(void* v){
 	return;
@@ -229,8 +229,9 @@ char* FiletoString(char* file_path)
 
 void indexify(char* entpath)
 {
-				char* s = FiletoString(entpath);
-				TokenizerT* tokenizer = TKCreate(s);
+				char* ss = FiletoString(entpath);
+
+				TokenizerT* tokenizer = TKCreate(ss);
 				char * token;
 				token = TKGetNextToken(tokenizer);
 
