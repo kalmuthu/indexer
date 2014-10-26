@@ -60,7 +60,6 @@ HashNodePtr createHashNode()
 	hash->word = NULL;
 	hash->records = NULL;
 	hash->num_records = 0;
-
 	return hash;
 }
 
@@ -83,8 +82,6 @@ int insertNewRecord(HashNodePtr hashptr, char* file_path)
 	newRecord->occurences++;
 
 	int response = SLInsert(hashptr->records, newRecord);
-	
-
 	if(response)
 	{
 		return 1;
@@ -150,47 +147,17 @@ int addHashNode(char* token, char* file_path)
 	int response = insertNewRecord(hash, file_path); //insert head record to list since it's a new Node
 
 
-//	printf("%p \n", hash->records->head);
-
-	//RecordPtr r = hash->records->head->data;
-	//printf("%s, ", r->file_path);
-
-
 	if (response)
 	{
 		hash->num_records++;
 		SLInsert(tokens, token);       //insert token into master sorted LL of all gathered tokens
-
-
-	//	RecordPtr r = hash->records->head->data;
-	//	printf("%s \n", r->file_path);
-
-	//printf("word before: %s \n", hash->word);
-	//printf("head before: %s \n", hash->records->head);
-
-
 		HASH_ADD_KEYPTR( hh,hashtable,hash->word,strlen(hash->word), hash);	
-
-	//	printf("word after: %s \n", hash->word);
-	//	printf("head after: %s \n", hash->records->head);
-
-	//	HashNodePtr h = NULL;
-	//	h = Hasher(token);
-		//printf("%s \n", h->word);
-		//printf("%p \n", h->records->head);
-		//printf("%d \n", h->num_records);
-		//exit(EXIT_FAILURE);
-		//RecordPtr rr = h->records->head->data;
-		//printf("%s \n", rr->file_path);
-
 
 		return 1;
 	}
 
 	else
 	{
-
-		//HashDestroyer(hash);      //may be wonky :0
 		return 0;
 	}
 }
@@ -234,20 +201,13 @@ void indexify(char* entpath)
 				TokenizerT* tokenizer = TKCreate(ss);
 				char * token;
 				token = TKGetNextToken(tokenizer);
-
-
 				
 				while (token)  // loop through all tokens, inserting new Records into hashnodes / creating new Hashnodes / updating existing records
 				{
-
 					HashNodePtr h = NULL;
 					h = Hasher(token);
-
-
 					if (!h)
 					{
-
-
 						int Nodegen = addHashNode(token, entpath);
 						
 						if (!Nodegen)
@@ -255,14 +215,9 @@ void indexify(char* entpath)
 							printf("Error creating new hash node \n");
 							return;
 						}
-
-
 					}
-
 					else
 					{
-
-						
 						int Fileinsert = addRecord(entpath, h);
 
 						if (!Fileinsert)
@@ -273,7 +228,6 @@ void indexify(char* entpath)
 					}
 					token = TKGetNextToken(tokenizer);
 				}
-
 }
 
 
@@ -288,11 +242,7 @@ void walkDir(char *basedir)
 	int fileindex = 0;
 	int fileflag = 0;
 	char* entpath;
-	
 	dir = opendir(basedir);
-
-
-
 	if (!dir)
 	{
 		indexify(basedir);
@@ -314,13 +264,7 @@ void walkDir(char *basedir)
 			strcat(entpath, ent->d_name); 
 
 			fileindex++; 
-
-
-
 			DIR* dirtest = opendir(entpath);
-
-
-			
 			if(dirtest) // directory
 			{
 				walkDir(entpath);
@@ -330,7 +274,6 @@ void walkDir(char *basedir)
 			{
 				indexify(entpath);
 			}
-		
 		}
 	closedir(dir);	
 	}
